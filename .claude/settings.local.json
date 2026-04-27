@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(openspec new:*)",
+      "Bash(openspec status:*)",
+      "Bash(openspec instructions:*)",
+      "Bash(openspec list:*)",
+      "Bash(python3:*)",
+      "Bash([ -d \"/Users/hezexi/TRAE/HomePage/$TARGET\" ])",
+      "Bash(curl -sI \"https://suggestqueries.google.com/complete/search?client=firefox&q=test\")",
+      "Bash(curl -sI \"https://suggestion.baidu.com/su?wd=test&cb=fn\")",
+      "Bash(curl -sI \"https://api.bing.com/qsonhs.aspx?type=cb&q=test&cb=fn\")",
+      "Bash(curl -sI \"https://www.google.com/s2/favicons?domain=github.com&sz=32\")",
+      "Bash(node *)"
+    ]
+  }
+}

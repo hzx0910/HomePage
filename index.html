@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --font-scale: 1;
+      --accent-rgb: 30, 58, 110;
+      --accent-hover-rgb: 54, 82, 134;
+      --accent: rgb(var(--accent-rgb));
+      --accent-hover: rgb(var(--accent-hover-rgb));
+      --surface: rgba(23,34,59,0.3);
+      --surface2: rgba(27,40,72,0.3);
+      --border: rgba(30,39,68,0.532);
+      --modal-bg: rgba(15,21,35,0.871);
+      --text: #e2e8f0;
+      --text-muted: #64748b;
+      --danger: #ef4444;
+      --done-text: #475569;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: calc(14px * var(--font-scale));
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 60px;
+      gap: 28px;
+    }
+
+    /* ─── Search ─── */
+    #search-section {
+      width: 100%;
+      max-width: 1024px;
+    }
+
+    #search-form {
+      display: grid;
+      grid-template-columns: 3fr 1fr;
+      gap: 20px;
+    }
+
+    .search-input-wrap {
+      position: relative;
+    }
+
+    #search-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 1.143em;
+      padding: 12px 40px 12px 16px;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    #search-input:focus { border-color: var(--accent); }
+    #search-input::placeholder { color: var(--text-muted); }
+
+    #search-clear {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--text-muted);
+      border: none;
+      border-radius: 50%;
+      color: var(--bg);
+      cursor: pointer;
+      font-size: 0.857em;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s, background .15s;
+    }
+
+    #search-clear:hover { background: var(--text); }
+
+    .search-input-wrap.has-value #search-clear {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #search-engines {
+      display: flex;
+      gap: 8px;
+    }
+
+    .engine-btn {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.929em;
+      font-weight: 500;
+      padding: 12px 16px;
+      transition: background .15s, color .15s, border-color .15s;
+      white-space: nowrap;
+    }
+
+    .engine-btn:hover { color: var(--text); border-color: var(--text-muted); }
+
+    .engine-btn.is-default {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .engine-btn.is-default:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+    /* ─── Search Suggestions ─── */
+    #suggestions-list {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      width: 100%;
+      background: rgba(26, 29, 39, 0.95);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 24px rgba(0,0,0,.5);
+      z-index: 200;
+      display: none;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    #suggestions-list.visible { display: block; }
+
+    .suggestion-item {
+      padding: 9px 16px;
+      font-size: 1em;
+      color: var(--text);
+      cursor: pointer;
+      transition: background .1s;
+    }
+
+    .suggestion-item:hover,
+    .suggestion-item.active { background: var(--surface2); }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      padding: 9px 12px 9px 16px;
+      font-size: 1em;
+      color: var(--text);
+      cursor: pointer;
+      transition: background .1s;
+    }
+
+    .history-item:hover { background: var(--surface2); }
+
+    .history-item-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-muted);
+    }
+
+    .history-delete {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity .15s, background .1s;
+    }
+
+    .history-item:hover .history-delete { opacity: 1; }
+    .history-delete:hover { background: var(--surface2); color: var(--text); }
+
+    /* ─── Cards layout ─── */
+    #main-grid {
+      display: grid;
+      grid-template-columns: 3fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 1024px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px 20px;
+    }
+
+    .card-header {
+      display: none;
+    }
+
+    .card-title {
+      font-size: 0.929em;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .btn-icon {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.143em;
+      line-height: 1;
+      padding: 4px 8px;
+      transition: color .15s, background .15s;
+    }
+
+    .btn-icon:hover { color: var(--text); background: var(--border); }
+
+    /* ─── Bookmarks ─── */
+    #bookmarks-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .bm-group-title {
+      font-size: 0.786em;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .bm-group-items { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .bm-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-size: 0.929em;
+      transition: border-color .15s, background .15s;
+      position: relative;
+    }
+
+    .bm-item:hover { border-color: var(--accent); background: var(--surface2); }
+
+    .bm-item img {
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      object-fit: contain;
+    }
+
+    .bm-item .bm-delete {
+      display: none;
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: var(--danger);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.714em;
+      width: 16px;
+      height: 16px;
+      line-height: 16px;
+      text-align: center;
+      padding: 0;
+    }
+
+    .bm-item:hover .bm-delete { display: block; }
+
+    .bm-item .bm-edit {
+      display: none;
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      background: var(--accent);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.714em;
+      width: 16px;
+      height: 16px;
+      line-height: 16px;
+      text-align: center;
+      padding: 0;
+    }
+
+    .bm-item:hover .bm-edit { display: block; }
+
+    .bm-item.dragging { opacity: 0.4; }
+
+    .bm-inline-add {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface2);
+      border: 1px dashed var(--accent);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 1em;
+      padding: 6px 10px;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+
+    .bm-inline-add:hover { border-color: var(--accent-hover); background: var(--border); }
+
+    .bm-empty-add {
+      display: block;
+      width: 100%;
+      background: transparent;
+      border: 1px dashed var(--accent);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1em;
+      padding: 10px;
+      transition: border-color .15s, color .15s;
+    }
+
+    .bm-empty-add:hover { border-color: var(--accent-hover); color: var(--text); }
+
+    /* ─── Todos ─── */
+    #todo-input-row {
+      margin-bottom: 14px;
+    }
+
+    #todo-add-btn {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.929em;
+      padding: 8px 12px;
+      text-align: left;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+
+    #todo-add-btn:hover { background: var(--surface); color: var(--text); border-color: var(--accent); }
+
+    #todos-pending, #todos-done { display: flex; flex-direction: column; gap: 4px; }
+
+    .todo-done-label {
+      font-size: 0.786em;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin: 10px 0 6px;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      transition: background .1s;
+    }
+
+    .todo-item:hover { background: var(--surface2); }
+
+    .todo-item input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .15s, border-color .15s;
+    }
+
+    .todo-item input[type="checkbox"]:checked {
+      background: var(--text-muted);
+      border-color: var(--text-muted);
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4l3 3 5-6' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-size: 10px 8px;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .todo-item .todo-text {
+      flex: 1;
+      font-size: 0.929em;
+      color: var(--text);
+    }
+
+    .todo-item.is-done .todo-text {
+      color: var(--done-text);
+      text-decoration: line-through;
+    }
+
+    .todo-item .todo-del {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1em;
+      opacity: 0;
+      padding: 0 2px;
+      transition: color .15s, opacity .15s;
+    }
+
+    .todo-item:hover .todo-del { opacity: 1; }
+    .todo-item .todo-del:hover { color: var(--danger); }
+
+    .todo-item .todo-edit {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.857em;
+      opacity: 0;
+      padding: 0 2px;
+      transition: color .15s, opacity .15s;
+    }
+
+    .todo-item:hover .todo-edit { opacity: 1; }
+    .todo-item .todo-edit:hover { color: var(--accent); }
+
+    .todo-item .todo-link {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .todo-item .todo-link:hover { text-decoration: underline; color: var(--text); }
+
+    .todo-item.dragging { opacity: 0.4; }
+
+    /* ─── Modal ─── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-backdrop.hidden { display: none; }
+
+    .modal {
+      background: var(--modal-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 360px;
+    }
+
+    .modal h3 { font-size: 1.071em; margin-bottom: 16px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+
+    .field label { font-size: 0.857em; color: var(--text-muted); }
+
+    .field input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.929em;
+      padding: 8px 10px;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .field input:focus { border-color: var(--accent); }
+
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+
+    .btn-primary {
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.929em;
+      padding: 8px 16px;
+      transition: background .15s;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .btn-secondary {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.929em;
+      padding: 8px 16px;
+      transition: background .15s;
+    }
+
+    .btn-secondary:hover { background: var(--border); color: var(--text); }
+
+    /* ─── Footer toolbar ─── */
+    #toolbar {
+      display: flex;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 0.857em;
+      align-items: center;
+    }
+
+    .toolbar-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.857em;
+      padding: 6px 12px;
+      transition: color .15s, border-color .15s;
+    }
+
+    .toolbar-btn:hover { color: var(--text); border-color: var(--text-muted); }
+    .toolbar-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .toolbar-btn:disabled:hover { color: var(--text-muted); border-color: var(--border); }
+
+    /* ─── Background overlay ─── */
+    body::before {
+      content: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body.has-bg {
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      --accent: rgba(var(--accent-rgb), 0.75);
+      --accent-hover: rgba(var(--accent-hover-rgb), 0.75);
+    }
+
+    body.has-bg::before { content: ''; }
+
+    #search-section, #main-grid, #toolbar {
+      position: relative;
+      z-index: 1;
+    }
+
+    #search-section {
+      z-index: 2;
+    }
+
+    /* ─── Hide todos layout ─── */
+    body.hide-todos #main-grid { grid-template-columns: 1fr; }
+    body.hide-todos #todos-card { display: none; }
+
+    /* ─── Settings modal ─── */
+    .settings-section-title {
+      font-size: 0.786em;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .settings-section { margin-bottom: 20px; }
+    .settings-section:last-child { margin-bottom: 0; }
+
+    .color-swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      position: relative;
+      transition: transform .15s, border-color .15s;
+      padding: 0;
+    }
+
+    .color-swatch:hover { transform: scale(1.15); }
+
+    .color-swatch.is-selected { border-color: var(--text); }
+
+    .color-swatch.is-selected::after {
+      content: '✓';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.929em;
+      font-weight: 700;
+    }
+
+    /* Font size buttons */
+    .font-size-btns { display: flex; gap: 8px; }
+
+    .font-size-btn {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.857em;
+      padding: 6px 0;
+      text-align: center;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+
+    .font-size-btn:hover { color: var(--text); border-color: var(--text-muted); }
+
+    .font-size-btn.is-selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* Toggle switch */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.929em;
+      color: var(--text);
+    }
+
+    .toggle-switch { position: relative; width: 36px; height: 20px; }
+
+    .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .toggle-track::before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      left: 3px;
+      top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform .2s;
+    }
+
+    .toggle-switch input:checked + .toggle-track { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-track::before { transform: translateX(16px); }
+
+    /* Settings bg buttons */
+    .settings-bg-row { display: flex; gap: 8px; }
+
+    .settings-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .settings-modal-header h3 { font-size: 1.071em; }
+
+    .empty-hint {
+      color: var(--text-muted);
+      font-size: 0.857em;
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    /* ─── Mobile responsive ─── */
+    @media (max-width: 600px) {
+      body {
+        padding: 24px 12px 40px;
+      }
+
+      #search-form {
+        grid-template-columns: 1fr;
+      }
+
+      #main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Search -->
+  <section id="search-section">
+    <form id="search-form">
+      <div class="search-input-wrap">
+        <input id="search-input" type="text" placeholder="搜索…" autocomplete="off">
+        <button id="search-clear" type="button" title="清空">×</button>
+        <div id="suggestions-list"></div>
+      </div>
+      <div id="search-engines">
+        <button class="engine-btn" data-engine="baidu" type="button">百度</button>
+        <button class="engine-btn" data-engine="bing" type="button">Bing</button>
+        <button class="engine-btn" data-engine="google" type="button">Google</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Main grid: bookmarks + todos -->
+  <div id="main-grid">
+
+    <!-- Bookmarks -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">书签</span>
+        <button class="btn-icon" id="bm-add-btn" title="添加书签">＋</button>
+      </div>
+      <div id="bookmarks-list"></div>
+    </div>
+
+    <!-- Todos -->
+    <div class="card" id="todos-card">
+      <div class="card-header">
+        <span class="card-title">待办</span>
+      </div>
+      <div id="todo-input-row">
+        <button id="todo-add-btn">＋ 添加待办</button>
+      </div>
+      <div id="todos-pending"></div>
+      <div id="todos-done-wrap" style="display:none">
+        <div class="todo-done-label">已完成</div>
+        <div id="todos-done"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer toolbar -->
+  <div id="toolbar">
+    <button class="toolbar-btn" id="export-btn">导出配置</button>
+    <button class="toolbar-btn" id="import-btn">导入配置</button>
+    <button class="toolbar-btn" id="settings-btn">设置</button>
+    <input type="file" id="import-file" accept=".json" style="display:none">
+    <input type="file" id="bg-file" accept="image/*" style="display:none">
+  </div>
+
+  <!-- Add/Edit Todo Modal -->
+  <div class="modal-backdrop hidden" id="todo-modal">
+    <div class="modal">
+      <h3 id="todo-modal-title">添加待办</h3>
+      <div class="field">
+        <label>标题</label>
+        <input id="todo-title" type="text" placeholder="待办事项">
+      </div>
+      <div class="field">
+        <label>链接 <span style="font-weight:400;color:var(--text-muted)">（选填）</span></label>
+        <input id="todo-url" type="text" placeholder="https://...">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="todo-cancel">取消</button>
+        <button class="btn-primary" id="todo-save">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Bookmark Modal -->
+  <div class="modal-backdrop hidden" id="bm-modal">
+    <div class="modal">
+      <h3>添加书签</h3>
+      <div class="field">
+        <label>标题</label>
+        <input id="bm-title" type="text" placeholder="GitHub">
+      </div>
+      <div class="field">
+        <label>URL</label>
+        <input id="bm-url" type="text" placeholder="https://github.com">
+      </div>
+      <div class="field">
+        <label>分组</label>
+        <input id="bm-group" type="text" placeholder="常用">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="bm-cancel">取消</button>
+        <button class="btn-primary" id="bm-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-backdrop hidden" id="settings-modal">
+    <div class="modal" style="width:400px">
+      <div class="settings-modal-header">
+        <h3>设置</h3>
+        <button class="btn-icon" id="settings-close">✕</button>
+      </div>
+
+      <!-- 背景图 -->
+      <div class="settings-section">
+        <div class="settings-section-title">背景图</div>
+        <div class="settings-bg-row">
+          <button class="btn-secondary" id="bg-choose-btn">选择背景图</button>
+          <button class="btn-secondary" id="bg-remove-btn" disabled>移除背景</button>
+        </div>
+      </div>
+
+      <!-- 主题色 -->
+      <div class="settings-section">
+        <div class="settings-section-title">主题色</div>
+        <div class="color-swatches">
+          <button class="color-swatch" data-color="#1e3a6e" data-rgb="30,58,110" data-hover-rgb="54,82,134" style="background:#1e3a6e" title="深蓝"></button>
+          <button class="color-swatch" data-color="#6060a0" data-rgb="96,96,160" data-hover-rgb="120,120,184" style="background:#6060a0" title="烟紫"></button>
+          <button class="color-swatch" data-color="#286080" data-rgb="40,96,128" data-hover-rgb="64,120,152" style="background:#286080" title="雾蓝"></button>
+          <button class="color-swatch" data-color="#603878" data-rgb="96,56,120" data-hover-rgb="120,80,144" style="background:#603878" title="薰衣草"></button>
+          <button class="color-swatch" data-color="#803028" data-rgb="128,48,40" data-hover-rgb="152,72,64" style="background:#803028" title="茶粉"></button>
+          <button class="color-swatch" data-color="#286048" data-rgb="40,96,72" data-hover-rgb="64,120,96" style="background:#286048" title="鼠尾草"></button>
+          <button class="color-swatch" data-color="#705018" data-rgb="112,80,24" data-hover-rgb="136,104,48" style="background:#705018" title="沙棕"></button>
+        </div>
+      </div>
+
+      <!-- 字体大小 -->
+      <div class="settings-section">
+        <div class="settings-section-title">字体大小</div>
+        <div class="font-size-btns">
+          <button class="font-size-btn" data-size="1">小</button>
+          <button class="font-size-btn" data-size="2">中小</button>
+          <button class="font-size-btn" data-size="3">中</button>
+          <button class="font-size-btn" data-size="4">中大</button>
+          <button class="font-size-btn" data-size="5">大</button>
+        </div>
+      </div>
+
+      <!-- 待办区域 -->
+      <div class="settings-section">
+        <div class="settings-section-title">显示待办区域</div>
+        <div class="toggle-row">
+          <span>在页面右侧显示待办卡片</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="todos-toggle" checked>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════
+    // Storage Module
+    // ═══════════════════════════════════════
+    const STORAGE_KEY = 'homepage_config';
+
+    const DEFAULT_CONFIG = {
+      version: 1,
+      search: {
+        defaultEngine: 'google',
+        engines: [
+          { name: 'baidu',  url: 'https://www.baidu.com/s?wd={q}' },
+          { name: 'bing',   url: 'https://www.bing.com/search?q={q}' },
+          { name: 'google', url: 'https://www.google.com/search?q={q}' },
+        ]
+      },
+      bookmarks: [
+        { id: uid(), group: '常用', title: 'GitHub',  url: 'https://github.com' },
+        { id: uid(), group: '常用', title: 'Google',  url: 'https://google.com' },
+        { id: uid(), group: '工具', title: 'MDN',     url: 'https://developer.mozilla.org' },
+      ],
+      todos: [],
+      searchHistory: [],
+      settings: { backgroundImage: null, accentColor: '#1e3a6e', showTodos: true, fontSize: 3 }
+    };
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    }
+
+    const Storage = {
+      load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch { return null; }
+      },
+      save(cfg) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+      },
+      init() {
+        let cfg = this.load();
+        if (!cfg) {
+          cfg = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+          cfg.bookmarks = cfg.bookmarks.map(b => ({ ...b, id: uid() }));
+          this.save(cfg);
+        } else {
+          // 迁移：引擎列表不含 baidu 时，替换为新引擎列表并保留 defaultEngine
+          const hasBaidu = cfg.search && cfg.search.engines && cfg.search.engines.some(e => e.name === 'baidu');
+          if (!hasBaidu) {
+            cfg.search = { ...DEFAULT_CONFIG.search, defaultEngine: cfg.search?.defaultEngine || 'google' };
+          }
+          // 迁移：补充缺失的 settings 字段
+          if (!cfg.settings) cfg.settings = {};
+          if (cfg.settings.backgroundImage === undefined) cfg.settings.backgroundImage = null;
+          if (!cfg.settings.accentColor) cfg.settings.accentColor = '#8e8ea8';
+          if (cfg.settings.showTodos === undefined) cfg.settings.showTodos = true;
+          if (!cfg.settings.fontSize) cfg.settings.fontSize = 3;
+          if (!cfg.searchHistory) cfg.searchHistory = [];
+          this.save(cfg);
+        }
+        return cfg;
+      }
+    };
+
+    // ═══════════════════════════════════════
+    // History Module
+    // ═══════════════════════════════════════
+    const History = {
+      add(query) {
+        if (!query) return;
+        const h = config.searchHistory;
+        const idx = h.indexOf(query);
+        if (idx !== -1) h.splice(idx, 1);
+        h.unshift(query);
+        if (h.length > 10) h.length = 10;
+        Storage.save(config);
+      },
+      remove(query) {
+        const h = config.searchHistory;
+        const idx = h.indexOf(query);
+        if (idx !== -1) h.splice(idx, 1);
+        Storage.save(config);
+      },
+      list() {
+        return config.searchHistory.slice();
+      }
+    };
+
+    // ═══════════════════════════════════════
+    // Suggestions Module
+    // ═══════════════════════════════════════
+    const Suggestions = {
+      _activeIndex: -1,
+      _items: [],
+      _debounceTimer: null,
+      _currentEngine: null,
+
+      // ── JSONP 工具 ──────────────────────────
+      _jsonp(url) {
+        return new Promise((resolve, reject) => {
+          const cbName = '__sg_' + Math.random().toString(36).slice(2) + '_' + Date.now();
+          const script = document.createElement('script');
+          const cleanup = () => {
+            clearTimeout(timer);
+            delete window[cbName];
+            if (script.parentNode) script.parentNode.removeChild(script);
+          };
+          const timer = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, 5000);
+          window[cbName] = data => { cleanup(); resolve(data); };
+          script.src = url.replace('__CALLBACK__', cbName);
+          script.onerror = () => { cleanup(); reject(new Error('script error')); };
+          document.head.appendChild(script);
+        });
+      },
+
+      // ── 各引擎 endpoint ───────────────────
+      _endpointFor(engine, query) {
+        const q = encodeURIComponent(query);
+        if (engine === 'google') return `https://suggestqueries.google.com/complete/search?client=firefox&q=${q}&callback=__CALLBACK__`;
+        if (engine === 'baidu')  return `https://suggestion.baidu.com/su?wd=${q}&cb=__CALLBACK__`;
+        if (engine === 'bing')   return `https://api.bing.com/qsonhs.aspx?type=cb&q=${q}&cb=__CALLBACK__`;
+        return null;
+      },
+
+      // ── 解析各引擎响应 ─────────────────────
+      _parse(engine, data) {
+        try {
+          if (engine === 'google') {
+            // [query, [suggestion, ...], ...]
+            return Array.isArray(data[1]) ? data[1].slice(0, 8) : [];
+          }
+          if (engine === 'baidu') {
+            // {q, p, s: [suggestion, ...]}
+            return Array.isArray(data.s) ? data.s.slice(0, 8) : [];
+          }
+          if (engine === 'bing') {
+            // {AS: {Results: [{Suggests: [{Txt}, ...]}]}}
+            const results = data?.AS?.Results?.[0]?.Suggests;
+            return Array.isArray(results) ? results.map(s => s.Txt).slice(0, 8) : [];
+          }
+        } catch {}
+        return [];
+      },
+
+      // ── 渲染 ──────────────────────────────
+      render(items, query = '') {
+        this._items = items;
+        this._activeIndex = -1;
+        const list = document.getElementById('suggestions-list');
+        list.innerHTML = '';
+        const q = query.toLowerCase();
+        const histMatches = q
+          ? History.list().filter(h => h.toLowerCase().includes(q)).slice(0, 3)
+          : [];
+        if (!histMatches.length && !items.length) { list.classList.remove('visible'); return; }
+        histMatches.forEach(text => {
+          const row = document.createElement('div');
+          row.className = 'history-item';
+          const span = document.createElement('span');
+          span.className = 'history-item-text';
+          span.textContent = text;
+          const del = document.createElement('button');
+          del.className = 'history-delete';
+          del.type = 'button';
+          del.textContent = '×';
+          del.addEventListener('mousedown', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            History.remove(text);
+            this.render(this._items, query);
+          });
+          row.addEventListener('mousedown', e => {
+            e.preventDefault();
+            const inp = document.getElementById('search-input');
+            inp.value = text;
+            inp.closest('.search-input-wrap').classList.add('has-value');
+            Search.doSearchWithQuery(text);
+            this.hide();
+          });
+          row.appendChild(span);
+          row.appendChild(del);
+          list.appendChild(row);
+        });
+        items.forEach(text => {
+          const div = document.createElement('div');
+          div.className = 'suggestion-item';
+          div.textContent = text;
+          div.addEventListener('mousedown', e => {
+            e.preventDefault();
+            Search.doSearchWithQuery(text);
+            this.hide();
+          });
+          list.appendChild(div);
+        });
+        list.classList.add('visible');
+      },
+
+      hide() {
+        this._items = [];
+        this._activeIndex = -1;
+        const list = document.getElementById('suggestions-list');
+        list.classList.remove('visible');
+        list.innerHTML = '';
+      },
+
+      hideOnly() {
+        this._activeIndex = -1;
+        document.getElementById('suggestions-list').classList.remove('visible');
+      },
+
+      // ── 键盘导航 ──────────────────────────
+      navigate(dir) {
+        if (!this._items.length) return false;
+        const len = this._items.length;
+        this._activeIndex = (this._activeIndex + dir + len) % len;
+        document.querySelectorAll('.suggestion-item').forEach((el, i) => {
+          el.classList.toggle('active', i === this._activeIndex);
+        });
+        document.getElementById('search-input').value = this._items[this._activeIndex];
+        return true;
+      },
+
+      activeText() {
+        return this._activeIndex >= 0 ? this._items[this._activeIndex] : null;
+      },
+
+      isVisible() {
+        return document.getElementById('suggestions-list').classList.contains('visible');
+      },
+
+      // ── 搜索历史渲染 ──────────────────────
+      renderHistory(items) {
+        this._items = [];
+        this._activeIndex = -1;
+        const list = document.getElementById('suggestions-list');
+        list.innerHTML = '';
+        if (!items.length) { list.classList.remove('visible'); return; }
+        items.forEach(text => {
+          const row = document.createElement('div');
+          row.className = 'history-item';
+          const span = document.createElement('span');
+          span.className = 'history-item-text';
+          span.textContent = text;
+          const del = document.createElement('button');
+          del.className = 'history-delete';
+          del.type = 'button';
+          del.textContent = '×';
+          del.addEventListener('mousedown', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            History.remove(text);
+            const remaining = History.list();
+            if (remaining.length) {
+              this.renderHistory(remaining);
+            } else {
+              list.classList.remove('visible');
+              list.innerHTML = '';
+            }
+          });
+          row.addEventListener('mousedown', e => {
+            e.preventDefault();
+            const inp = document.getElementById('search-input');
+            inp.value = text;
+            inp.closest('.search-input-wrap').classList.add('has-value');
+            Search.doSearchWithQuery(text);
+            this.hide();
+          });
+          row.appendChild(span);
+          row.appendChild(del);
+          list.appendChild(row);
+        });
+        list.classList.add('visible');
+      },
+
+      // ── 触发请求 ──────────────────────────
+      fetch(query, engine) {
+        clearTimeout(this._debounceTimer);
+        if (!query) { this.hide(); return; }
+        this._debounceTimer = setTimeout(async () => {
+          const url = this._endpointFor(engine, query);
+          if (!url) return;
+          try {
+            const data = await this._jsonp(url);
+            const items = this._parse(engine, data);
+            // 仅当输入框内容仍匹配时才渲染（防止旧请求覆盖新结果）
+            if (document.getElementById('search-input').value.trim() === query) {
+              this.render(items, query);
+            }
+          } catch {}
+        }, 300);
+      }
+    };
+
+    // ═══════════════════════════════════════
+    // Search Module
+    // ═══════════════════════════════════════
+    const Search = {
+      init(cfg) {
+        this.cfg = cfg.search;
+
+        // Enter key uses default engine (task 6.2: prefer highlighted suggestion)
+        document.getElementById('search-form').addEventListener('submit', e => {
+          e.preventDefault();
+          const active = Suggestions.activeText();
+          if (active) {
+            this.doSearchWithQuery(active);
+            Suggestions.hide();
+          } else {
+            this.doSearch(this.cfg.defaultEngine);
+          }
+        });
+
+        // Engine buttons (task 6.1: close suggestions after search)
+        document.querySelectorAll('.engine-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const name = btn.dataset.engine;
+            const active = Suggestions.activeText();
+            if (active) {
+              this.doSearchWithQueryAndEngine(active, name);
+            } else {
+              this.doSearch(name);
+            }
+            this.setDefault(name);
+            Suggestions.hide();
+          });
+        });
+
+        this.updateHighlight();
+
+        // Clear button
+        const input = document.getElementById('search-input');
+        const wrap = input.closest('.search-input-wrap');
+
+        // task 4.1: input → debounced suggestions fetch, or show history when empty
+        input.addEventListener('input', () => {
+          wrap.classList.toggle('has-value', input.value.length > 0);
+          if (!input.value) {
+            Suggestions.hide();
+            const hist = History.list();
+            if (hist.length) Suggestions.renderHistory(hist);
+          } else {
+            Suggestions.fetch(input.value.trim(), this.cfg.defaultEngine);
+          }
+        });
+
+        // task 4.2: blur → delayed hide (keep cache for focus restore)
+        input.addEventListener('blur', () => {
+          setTimeout(() => Suggestions.hideOnly(), 150);
+        });
+
+        // focus → restore cached suggestions or show history
+        input.addEventListener('focus', () => {
+          if (Suggestions._items.length) {
+            Suggestions.render(Suggestions._items, input.value.trim());
+          } else if (!input.value) {
+            const hist = History.list();
+            if (hist.length) Suggestions.renderHistory(hist);
+          }
+        });
+
+        // task 4.3: keyboard navigation
+        input.addEventListener('keydown', e => {
+          if (!Suggestions.isVisible()) return;
+          if (e.key === 'ArrowDown') { e.preventDefault(); Suggestions.navigate(1); }
+          else if (e.key === 'ArrowUp') { e.preventDefault(); Suggestions.navigate(-1); }
+          else if (e.key === 'Escape') { e.preventDefault(); Suggestions.hide(); }
+        });
+
+        document.getElementById('search-clear').addEventListener('click', () => {
+          input.value = '';
+          wrap.classList.remove('has-value');
+          Suggestions.hide();
+          const hist = History.list();
+          if (hist.length) Suggestions.renderHistory(hist);
+          input.focus();
+        });
+      },
+
+      doSearch(engineName) {
+        const query = document.getElementById('search-input').value.trim();
+        if (!query) return;
+        this.doSearchWithQueryAndEngine(query, engineName);
+      },
+
+      doSearchWithQuery(query) {
+        this.doSearchWithQueryAndEngine(query, this.cfg.defaultEngine);
+      },
+
+      doSearchWithQueryAndEngine(query, engineName) {
+        if (!query) return;
+        const engine = this.cfg.engines.find(e => e.name === engineName) || this.cfg.engines[0];
+        const url = engine.url.replace('{q}', encodeURIComponent(query));
+        window.open(url, '_blank');
+        History.add(query);
+        const inp = document.getElementById('search-input');
+        inp.value = query;
+        inp.closest('.search-input-wrap').classList.toggle('has-value', query.length > 0);
+      },
+
+      setDefault(name) {
+        this.cfg.defaultEngine = name;
+        Storage.save(config);
+        this.updateHighlight();
+      },
+
+      updateHighlight() {
+        document.querySelectorAll('.engine-btn').forEach(btn => {
+          btn.classList.toggle('is-default', btn.dataset.engine === this.cfg.defaultEngine);
+        });
+      }
+    };
+
+    // ═══════════════════════════════════════
+    // Bookmarks Module
+    // ═══════════════════════════════════════
+    const Bookmarks = {
+      editingId: null,
+      dragState: null,
+
+      init(cfg) {
+        this.cfg = cfg;
+        this.render();
+
+        document.getElementById('bm-add-btn').addEventListener('click', () => this.openModal());
+        document.getElementById('bm-cancel').addEventListener('click', () => this.closeModal());
+        document.getElementById('bm-save').addEventListener('click', () => this.save());
+
+        document.getElementById('bm-modal').addEventListener('click', e => {
+          if (e.target === e.currentTarget) this.closeModal();
+        });
+      },
+
+      _faviconCache: new Map(),
+
+      faviconFallback(title) {
+        const char = ([...(title || '')][0] || '?').toUpperCase();
+        const color = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="3" fill="${color}"/><text x="7" y="11" font-size="11" font-family="sans-serif" fill="white" text-anchor="middle">${char}</text></svg>`;
+        return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+      },
+
+      setFavicon(img, url, title) {
+        const cached = this._faviconCache.get(url);
+        if (cached) { img.src = cached; return; }
+
+        let { hostname, protocol } = (() => { try { return new URL(url); } catch { return {}; } })();
+        if (!hostname || !protocol?.startsWith('http')) {
+          img.src = this.faviconFallback(title); return;
+        }
+
+        const directUrl = `${protocol}//${hostname}/favicon.ico`;
+        const googleUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`;
+        let resolved = false;
+
+        // Show fallback immediately so the bookmark renders without waiting
+        img.src = this.faviconFallback(title);
+
+        const resolve = (src) => {
+          if (resolved) return;
+          resolved = true;
+          this._faviconCache.set(url, src);
+          img.src = src;
+        };
+
+        let failCount = 0;
+        const fail = () => { failCount++; if (failCount === 2) resolve(this.faviconFallback(title)); };
+
+        const tryFetchThenImg = (src, isGoogle) => {
+          const ac = new AbortController();
+          const timer = setTimeout(() => { ac.abort(); fail(); }, 3000);
+          fetch(src, { signal: ac.signal, mode: 'no-cors' })
+            .then(() => {
+              clearTimeout(timer);
+              // fetch completed (connection succeeded), now probe via Image
+              // connection is already established so Image loads from cache instantly
+              const probe = new Image();
+              probe.onload = () => {
+                if (isGoogle && probe.naturalWidth <= 16) { fail(); return; }
+                resolve(src);
+              };
+              probe.onerror = () => fail();
+              probe.src = src;
+            })
+            .catch(() => { clearTimeout(timer); fail(); });
+        };
+
+        tryFetchThenImg(directUrl, false);
+        tryFetchThenImg(googleUrl, true);
+      },
+
+      render() {
+        const list = document.getElementById('bookmarks-list');
+        list.innerHTML = '';
+
+        const groups = {};
+        for (const bm of this.cfg.bookmarks) {
+          const g = bm.group || '其他';
+          if (!groups[g]) groups[g] = [];
+          groups[g].push(bm);
+        }
+
+        if (Object.keys(groups).length === 0) {
+          const emptyBtn = document.createElement('button');
+          emptyBtn.className = 'bm-empty-add';
+          emptyBtn.textContent = '＋ 添加书签';
+          emptyBtn.addEventListener('click', () => this.openModal());
+          list.appendChild(emptyBtn);
+          return;
+        }
+
+        for (const [group, items] of Object.entries(groups)) {
+          const wrap = document.createElement('div');
+          const title = document.createElement('div');
+          title.className = 'bm-group-title';
+          title.textContent = group;
+          const row = document.createElement('div');
+          row.className = 'bm-group-items';
+          row.dataset.group = group;
+
+          row.addEventListener('dragover', e => {
+            e.preventDefault();
+            if (!this.dragState) return;
+            const dragEl = document.querySelector(`.bm-item[data-id="${this.dragState}"]`);
+            if (!dragEl) return;
+            // If dragging over empty space after all items, append to row
+            const items = [...row.querySelectorAll('.bm-item')].filter(el => el !== dragEl);
+            if (items.length === 0) {
+              row.appendChild(dragEl);
+            }
+          });
+          row.addEventListener('drop', e => {
+            e.preventDefault();
+            if (!this.dragState) return;
+            this.rebuildFromDOM();
+            this.dragState = null;
+          });
+
+          for (const bm of items) {
+            const a = document.createElement('a');
+            a.className = 'bm-item';
+            a.href = bm.url;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.draggable = true;
+            a.dataset.id = bm.id;
+
+            a.addEventListener('dragstart', e => {
+              this.dragState = bm.id;
+              a.classList.add('dragging');
+              e.dataTransfer.effectAllowed = 'move';
+            });
+            a.addEventListener('dragend', () => {
+              a.classList.remove('dragging');
+              if (this.dragState) {
+                // Drop cancelled (e.g. outside valid target) — re-render to restore order
+                this.rebuildFromDOM();
+                this.dragState = null;
+              }
+            });
+            a.addEventListener('dragover', e => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!this.dragState || this.dragState === bm.id) return;
+              const dragEl = document.querySelector(`.bm-item[data-id="${this.dragState}"]`);
+              if (!dragEl) return;
+              // Determine insert position based on mouse position relative to this item
+              const rect = a.getBoundingClientRect();
+              const midX = rect.left + rect.width / 2;
+              if (e.clientX < midX) {
+                a.parentElement.insertBefore(dragEl, a);
+              } else {
+                a.parentElement.insertBefore(dragEl, a.nextSibling);
+              }
+            });
+            a.addEventListener('drop', e => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!this.dragState) return;
+              this.rebuildFromDOM();
+              this.dragState = null;
+            });
+
+            const img = document.createElement('img');
+            this.setFavicon(img, bm.url, bm.title);
+
+            const span = document.createElement('span');
+            span.textContent = bm.title;
+
+            const edit = document.createElement('button');
+            edit.className = 'bm-edit';
+            edit.textContent = '✎';
+            edit.title = '编辑';
+            edit.addEventListener('click', e => {
+              e.preventDefault();
+              e.stopPropagation();
+              this.openEditModal(bm);
+            });
+
+            const del = document.createElement('button');
+            del.className = 'bm-delete';
+            del.textContent = '×';
+            del.title = '删除';
+            del.addEventListener('click', e => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (confirm(`删除书签「${bm.title}」？`)) {
+                this.cfg.bookmarks = this.cfg.bookmarks.filter(b => b.id !== bm.id);
+                Storage.save(this.cfg);
+                this.render();
+              }
+            });
+
+            a.appendChild(img);
+            a.appendChild(span);
+            a.appendChild(edit);
+            a.appendChild(del);
+            row.appendChild(a);
+          }
+
+          wrap.appendChild(title);
+          wrap.appendChild(row);
+          list.appendChild(wrap);
+        }
+
+        // 内联添加按钮：追加到最后一个分组的书签行末尾
+        const allRows = list.querySelectorAll('.bm-group-items');
+        const lastRow = allRows[allRows.length - 1];
+        if (lastRow) {
+          const addBtn = document.createElement('button');
+          addBtn.className = 'bm-inline-add';
+          addBtn.textContent = '＋';
+          addBtn.title = '添加书签';
+          addBtn.addEventListener('click', () => this.openModal());
+          lastRow.appendChild(addBtn);
+        }
+      },
+
+      rebuildFromDOM() {
+        const newBookmarks = [];
+        document.querySelectorAll('.bm-group-items').forEach(row => {
+          const group = row.dataset.group;
+          row.querySelectorAll('.bm-item[data-id]').forEach(el => {
+            const id = el.dataset.id;
+            const existing = this.cfg.bookmarks.find(b => b.id === id);
+            if (existing) {
+              newBookmarks.push({ ...existing, group });
+            }
+          });
+        });
+        this.cfg.bookmarks = newBookmarks;
+        Storage.save(this.cfg);
+        this.render();
+      },
+
+      normalizeUrl(url) {
+        url = url.trim();
+        if (!url) return '';
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        return url;
+      },
+
+      openModal() {
+        this.editingId = null;
+        document.getElementById('bm-title').value = '';
+        document.getElementById('bm-url').value = '';
+        document.getElementById('bm-group').value = '';
+        document.getElementById('bm-save').textContent = '添加';
+        document.getElementById('bm-modal').classList.remove('hidden');
+        document.getElementById('bm-title').focus();
+      },
+
+      openEditModal(bm) {
+        this.editingId = bm.id;
+        document.getElementById('bm-title').value = bm.title;
+        document.getElementById('bm-url').value = bm.url;
+        document.getElementById('bm-group').value = bm.group || '';
+        document.getElementById('bm-save').textContent = '保存';
+        document.getElementById('bm-modal').classList.remove('hidden');
+        document.getElementById('bm-title').focus();
+      },
+
+      closeModal() {
+        document.getElementById('bm-modal').classList.add('hidden');
+        this.editingId = null;
+      },
+
+      save() {
+        const title = document.getElementById('bm-title').value.trim();
+        const url = this.normalizeUrl(document.getElementById('bm-url').value);
+        const group = document.getElementById('bm-group').value.trim() || '其他';
+
+        if (!title || !url) return;
+
+        if (this.editingId) {
+          const bm = this.cfg.bookmarks.find(b => b.id === this.editingId);
+          if (bm) {
+            bm.title = title;
+            bm.url = url;
+            bm.group = group;
+          }
+        } else {
+          this.cfg.bookmarks.push({ id: uid(), group, title, url });
+        }
+
+        Storage.save(this.cfg);
+        this.render();
+        this.closeModal();
+      }
+    };
+
+    // ═══════════════════════════════════════
+    // Todos Module
+    // ═══════════════════════════════════════
+    const Todos = {
+      editingId: null,
+      dragState: null,
+
+      init(cfg) {
+        this.cfg = cfg;
+        this.render();
+
+        document.getElementById('todo-add-btn').addEventListener('click', () => this.openModal());
+        document.getElementById('todo-save').addEventListener('click', () => this.save());
+        document.getElementById('todo-cancel').addEventListener('click', () => this.closeModal());
+        document.getElementById('todo-modal').addEventListener('click', e => {
+          if (e.target === document.getElementById('todo-modal')) this.closeModal();
+        });
+      },
+
+      openModal() {
+        this.editingId = null;
+        document.getElementById('todo-title').value = '';
+        document.getElementById('todo-url').value = '';
+        document.getElementById('todo-modal-title').textContent = '添加待办';
+        document.getElementById('todo-save').textContent = '添加';
+        document.getElementById('todo-modal').classList.remove('hidden');
+        document.getElementById('todo-title').focus();
+      },
+
+      openEditModal(t) {
+        this.editingId = t.id;
+        document.getElementById('todo-title').value = t.text;
+        document.getElementById('todo-url').value = t.url || '';
+        document.getElementById('todo-modal-title').textContent = '编辑待办';
+        document.getElementById('todo-save').textContent = '保存';
+        document.getElementById('todo-modal').classList.remove('hidden');
+        document.getElementById('todo-title').focus();
+      },
+
+      closeModal() {
+        document.getElementById('todo-modal').classList.add('hidden');
+        this.editingId = null;
+      },
+
+      save() {
+        const text = document.getElementById('todo-title').value.trim();
+        if (!text) return;
+        const url = document.getElementById('todo-url').value.trim() || null;
+        if (this.editingId) {
+          const t = this.cfg.todos.find(x => x.id === this.editingId);
+          if (t) { t.text = text; t.url = url; }
+        } else {
+          this.cfg.todos.unshift({ id: uid(), text, url, done: false, createdAt: new Date().toISOString(), doneAt: null });
+        }
+        Storage.save(this.cfg);
+        this.closeModal();
+        this.render();
+      },
+
+      render() {
+        const pending = document.getElementById('todos-pending');
+        const done = document.getElementById('todos-done');
+        const doneWrap = document.getElementById('todos-done-wrap');
+        pending.innerHTML = '';
+        done.innerHTML = '';
+
+        const todoPending = this.cfg.todos.filter(t => !t.done);
+        const todoDone = this.cfg.todos.filter(t => t.done);
+
+        if (todoPending.length === 0 && todoDone.length === 0) {
+          pending.innerHTML = '<div class="empty-hint">暂无待办</div>';
+        }
+
+        for (const t of todoPending) pending.appendChild(this.makeItem(t));
+        for (const t of todoDone) done.appendChild(this.makeItem(t));
+
+        doneWrap.style.display = todoDone.length > 0 ? 'block' : 'none';
+      },
+
+      makeItem(t) {
+        const div = document.createElement('div');
+        div.className = 'todo-item' + (t.done ? ' is-done' : '');
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = t.done;
+        cb.addEventListener('change', () => {
+          t.done = cb.checked;
+          t.doneAt = cb.checked ? new Date().toISOString() : null;
+          Storage.save(this.cfg);
+          this.render();
+        });
+
+        let titleEl;
+        if (t.url) {
+          titleEl = document.createElement('a');
+          titleEl.className = 'todo-text todo-link';
+          titleEl.href = t.url;
+          titleEl.target = '_blank';
+          titleEl.rel = 'noopener noreferrer';
+          titleEl.textContent = t.text;
+        } else {
+          titleEl = document.createElement('span');
+          titleEl.className = 'todo-text';
+          titleEl.textContent = t.text;
+        }
+
+        const del = document.createElement('button');
+        del.className = 'todo-del';
+        del.textContent = '×';
+        del.title = '删除';
+        del.addEventListener('click', () => {
+          this.cfg.todos = this.cfg.todos.filter(x => x.id !== t.id);
+          Storage.save(this.cfg);
+          this.render();
+        });
+
+        div.appendChild(cb);
+        div.appendChild(titleEl);
+
+        if (!t.done) {
+          const edit = document.createElement('button');
+          edit.className = 'todo-edit';
+          edit.textContent = '✎';
+          edit.title = '编辑';
+          edit.addEventListener('click', e => {
+            e.stopPropagation();
+            this.openEditModal(t);
+          });
+          div.appendChild(edit);
+
+          div.draggable = true;
+          div.dataset.id = t.id;
+
+          div.addEventListener('dragstart', e => {
+            this.dragState = { id: t.id };
+            div.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+          });
+          div.addEventListener('dragend', () => {
+            div.classList.remove('dragging');
+            this.dragState = null;
+          });
+          div.addEventListener('dragover', e => {
+            e.preventDefault();
+            if (!this.dragState) return;
+            const dragEl = document.querySelector(`[data-id="${this.dragState.id}"]`);
+            if (!dragEl || dragEl === div) return;
+            const rect = div.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            const parent = div.parentNode;
+            if (e.clientY < midY) {
+              parent.insertBefore(dragEl, div);
+            } else {
+              parent.insertBefore(dragEl, div.nextSibling);
+            }
+          });
+          div.addEventListener('drop', e => {
+            e.preventDefault();
+            this.rebuildPendingFromDOM();
+          });
+        }
+
+        div.appendChild(del);
+        return div;
+      },
+
+      rebuildPendingFromDOM() {
+        const pending = document.getElementById('todos-pending');
+        const ids = Array.from(pending.querySelectorAll('[data-id]')).map(el => el.dataset.id);
+        const pendingTodos = ids.map(id => this.cfg.todos.find(t => t.id === id)).filter(Boolean);
+        const doneTodos = this.cfg.todos.filter(t => t.done);
+        this.cfg.todos = [...pendingTodos, ...doneTodos];
+        Storage.save(this.cfg);
+      }
+    };
+
+    // ═══════════════════════════════════════
+    // Config Import / Export
+    // ═══════════════════════════════════════
+    const ConfigIO = {
+      init(cfg) {
+        this.cfg = cfg;
+
+        document.getElementById('export-btn').addEventListener('click', () => this.export());
+        document.getElementById('import-btn').addEventListener('click', () => {
+          document.getElementById('import-file').click();
+        });
+        document.getElementById('import-file').addEventListener('change', e => {
+          const file = e.target.files[0];
+          if (file) this.import(file);
+          e.target.value = '';
+        });
+      },
+
+      export() {
+        const { searchHistory, ...exportCfg } = this.cfg;
+        const json = JSON.stringify(exportCfg, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'homepage-config.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      },
+
+      import(file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          try {
+            const parsed = JSON.parse(e.target.result);
+            if (typeof parsed !== 'object' || !parsed.version || !Array.isArray(parsed.bookmarks) || !Array.isArray(parsed.todos)) {
+              alert('导入失败：文件格式不正确');
+              return;
+            }
+            if (!confirm('导入将覆盖当前所有数据，确认继续？')) return;
+            Storage.save(parsed);
+            location.reload();
+          } catch {
+            alert('导入失败：无法解析 JSON 文件');
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+
+    // ═══════════════════════════════════════
+    // Settings Module
+    // ═══════════════════════════════════════
+    const Settings = {
+      // 预设色板数据（与 DOM 中 data-* 保持一致）
+      _PRESETS: [
+        { color: '#1e3a6e', rgb: '30,58,110',  hoverRgb: '54,82,134'   },
+        { color: '#6060a0', rgb: '96,96,160',  hoverRgb: '120,120,184' },
+        { color: '#286080', rgb: '40,96,128',  hoverRgb: '64,120,152'  },
+        { color: '#603878', rgb: '96,56,120',  hoverRgb: '120,80,144'  },
+        { color: '#803028', rgb: '128,48,40',  hoverRgb: '152,72,64'   },
+        { color: '#286048', rgb: '40,96,72',   hoverRgb: '64,120,96'   },
+        { color: '#705018', rgb: '112,80,24',  hoverRgb: '136,104,48'  },
+      ],
+
+      init(cfg) {
+        this.cfg = cfg;
+
+        // 弹窗开关
+        document.getElementById('settings-btn').addEventListener('click', () => {
+          document.getElementById('settings-modal').classList.remove('hidden');
+        });
+        const closeModal = () => document.getElementById('settings-modal').classList.add('hidden');
+        document.getElementById('settings-close').addEventListener('click', closeModal);
+        document.getElementById('settings-modal').addEventListener('click', e => {
+          if (e.target === e.currentTarget) closeModal();
+        });
+
+        // 背景图
+        document.getElementById('bg-choose-btn').addEventListener('click', () => {
+          document.getElementById('bg-file').click();
+        });
+        document.getElementById('bg-file').addEventListener('change', e => {
+          const file = e.target.files[0];
+          if (!file) return;
+          e.target.value = '';
+          const reader = new FileReader();
+          reader.onload = ev => {
+            const img = new Image();
+            img.onload = () => {
+              const maxW = window.screen.width * (window.devicePixelRatio || 1);
+              const maxH = window.screen.height * (window.devicePixelRatio || 1);
+              let { naturalWidth: w, naturalHeight: h } = img;
+              if (w > maxW || h > maxH) {
+                const ratio = Math.min(maxW / w, maxH / h);
+                w = Math.round(w * ratio);
+                h = Math.round(h * ratio);
+              }
+              const canvas = document.createElement('canvas');
+              canvas.width = w;
+              canvas.height = h;
+              canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+              const base64 = canvas.toDataURL('image/jpeg', 0.9);
+              cfg.settings.backgroundImage = base64;
+              Storage.save(cfg);
+              this._applyBackground(base64);
+              this._updateRemoveBtn();
+            };
+            img.src = ev.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+        document.getElementById('bg-remove-btn').addEventListener('click', () => {
+          cfg.settings.backgroundImage = null;
+          Storage.save(cfg);
+          this._removeBackground();
+          this._updateRemoveBtn();
+        });
+
+        // 主题色
+        document.querySelectorAll('.color-swatch').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const color = btn.dataset.color;
+            const rgb = btn.dataset.rgb;
+            const hoverRgb = btn.dataset.hoverRgb;
+            cfg.settings.accentColor = color;
+            Storage.save(cfg);
+            this.applyAccent(color, rgb, hoverRgb);
+            this._updateSwatches(color);
+          });
+        });
+
+        // 待办开关
+        document.getElementById('todos-toggle').addEventListener('change', e => {
+          cfg.settings.showTodos = e.target.checked;
+          Storage.save(cfg);
+          document.body.classList.toggle('hide-todos', !e.target.checked);
+        });
+
+        // 字体大小
+        document.querySelectorAll('.font-size-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const size = parseInt(btn.dataset.size, 10);
+            cfg.settings.fontSize = size;
+            Storage.save(cfg);
+            this.applyFontSize(size);
+            this._updateFontBtns(size);
+          });
+        });
+
+        // 恢复状态
+        this.restore(cfg);
+      },
+
+      restore(cfg) {
+        // 背景图
+        if (cfg.settings.backgroundImage) this._applyBackground(cfg.settings.backgroundImage);
+        this._updateRemoveBtn();
+
+        // 主题色
+        const preset = this._PRESETS.find(p => p.color === cfg.settings.accentColor) || this._PRESETS[0];
+        this.applyAccent(preset.color, preset.rgb, preset.hoverRgb);
+        this._updateSwatches(preset.color);
+
+        // 待办开关
+        if (!cfg.settings.showTodos) {
+          document.body.classList.add('hide-todos');
+          document.getElementById('todos-toggle').checked = false;
+        }
+
+        // 字体大小
+        const fontSize = cfg.settings.fontSize || 3;
+        this.applyFontSize(fontSize);
+        this._updateFontBtns(fontSize);
+      },
+
+      applyFontSize(size) {
+        const scales = [0.857, 0.929, 1, 1.071, 1.143];
+        const scale = scales[(size - 1)] || 1;
+        document.documentElement.style.setProperty('--font-scale', scale);
+      },
+
+      applyAccent(color, rgb, hoverRgb) {
+        const root = document.documentElement;
+        root.style.setProperty('--accent-rgb', rgb);
+        root.style.setProperty('--accent-hover-rgb', hoverRgb);
+        root.style.setProperty('--accent', `rgb(${rgb})`);
+        root.style.setProperty('--accent-hover', `rgb(${hoverRgb})`);
+        // JS equivalent of color-mix() for Windows Chrome file:// compatibility
+        const [r, g, b] = rgb.split(',').map(Number);
+        const mix = (br, bg, bb, t) => [Math.round(br*(1-t)+r*t), Math.round(bg*(1-t)+g*t), Math.round(bb*(1-t)+b*t)];
+        const [sr, sg, sb] = mix(0x13, 0x15, 0x1f, 0.35);
+        const [s2r, s2g, s2b] = mix(0x19, 0x1c, 0x2e, 0.40);
+        const [bdr, bdg, bdb] = mix(0x1e, 0x22, 0x38, 0.22);
+        const [mr, mg, mb] = mix(0x0d, 0x0f, 0x17, 0.14);
+        root.style.setProperty('--surface',   `rgba(${sr},${sg},${sb},0.3)`);
+        root.style.setProperty('--surface2',  `rgba(${s2r},${s2g},${s2b},0.3)`);
+        root.style.setProperty('--border',    `rgba(${bdr},${bdg},${bdb},0.5)`);
+        root.style.setProperty('--modal-bg',  `rgba(${mr},${mg},${mb},0.8)`);
+      },
+
+      _applyBackground(base64) {
+        document.body.style.backgroundImage = `url(${base64})`;
+        document.body.classList.add('has-bg');
+      },
+
+      _removeBackground() {
+        document.body.style.backgroundImage = '';
+        document.body.classList.remove('has-bg');
+      },
+
+      _updateRemoveBtn() {
+        document.getElementById('bg-remove-btn').disabled = !this.cfg.settings.backgroundImage;
+      },
+
+      _updateSwatches(activeColor) {
+        document.querySelectorAll('.color-swatch').forEach(btn => {
+          btn.classList.toggle('is-selected', btn.dataset.color === activeColor);
+        });
+      },
+
+      _updateFontBtns(activeSize) {
+        document.querySelectorAll('.font-size-btn').forEach(btn => {
+          btn.classList.toggle('is-selected', parseInt(btn.dataset.size, 10) === activeSize);
+        });
+      }
+    };
+
+    // ═══════════════════════════════════════
+    // Boot
+    // ═══════════════════════════════════════
+    const config = Storage.init();
+    Search.init(config);
+    Bookmarks.init(config);
+    Todos.init(config);
+    ConfigIO.init(config);
+    Settings.init(config);
+  </script>
+</body>
+</html>
