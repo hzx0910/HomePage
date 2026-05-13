@@ -16,8 +16,8 @@
 
 ## 4. 验证
 
-- [ ] 4.1 macOS Chrome：无背景图时模块背景和边框正常显示，颜色与原版一致
-- [ ] 4.2 macOS Chrome：切换主题色后 surface/border 颜色同步更新
-- [ ] 4.3 macOS Chrome：设置背景图后模块半透明可透出背景
-- [ ] 4.4 macOS Chrome：移除背景图后模块恢复不透明
-- [ ] 4.5 Windows Chrome：无背景图时模块背景和边框正常显示（核心修复）
+- [x] 4.1 macOS Chrome：无背景图时模块背景和边框正常显示，颜色与原版一致
+- [x] 4.2 macOS Chrome：切换主题色后 surface/border 颜色同步更新
+- [x] 4.3 macOS Chrome：设置背景图后模块半透明可透出背景
+- [x] 4.4 macOS Chrome：移除背景图后模块恢复不透明
+- [x] 4.5 Windows Chrome：无背景图时模块背景和边框正常显示（核心修复）

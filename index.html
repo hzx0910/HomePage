@@ -585,9 +585,110 @@
       z-index: 2;
     }
 
+    /* ─── Calendar ─── */
+    #cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    #cal-header .btn-icon {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    #cal-header .btn-icon:hover {
+      background: var(--surface2);
+    }
+
+    #cal-title {
+      font-size: 0.786em;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    #cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      gap: 2px 0;
+    }
+
+    .cal-weekday {
+      font-size: 0.714em;
+      font-weight: 600;
+      color: #94a3b8;
+      padding: 0 0 2px;
+      letter-spacing: .05em;
+    }
+
+
+    .cal-day {
+      font-size: 0.786em;
+      color: #94a3b8;
+      padding: 0;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cal-grid-fri {
+      padding-right: 4px;
+    }
+
+    .cal-grid-sat {
+      padding-left: 4px;
+      position: relative;
+    }
+
+    .cal-grid-sat::before {
+      content: '';
+      position: absolute;
+      left: -1px;
+      top: 0;
+      bottom: 0;
+      border-left: 1px dashed rgba(148,163,184,0.2);
+    }
+
+    .cal-sat-first::before {
+      top: 8px;
+    }
+
+    .cal-sat-last::before {
+      bottom: 8px;
+    }
+
+    .cal-day.is-other {
+      opacity: 0.35;
+    }
+
+    .cal-day span {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .cal-day.is-today span {
+      background: var(--accent);
+      color: #fff !important;
+      font-weight: 600;
+    }
+
+    /* ─── Right column ─── */
+    #right-column {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
     /* ─── Hide todos layout ─── */
     body.hide-todos #main-grid { grid-template-columns: 1fr; }
-    body.hide-todos #todos-card { display: none; }
+    body.hide-todos #right-column { display: none; }
 
     /* ─── Settings modal ─── */
     .settings-section-title {
@@ -757,19 +858,42 @@
       <div id="bookmarks-list"></div>
     </div>
 
-    <!-- Todos -->
-    <div class="card" id="todos-card">
-      <div class="card-header">
-        <span class="card-title">待办</span>
+    <!-- Right column: calendar + todos -->
+    <div id="right-column">
+
+      <!-- Calendar -->
+      <div class="card" id="calendar-card">
+        <div id="cal-header">
+          <button class="btn-icon" id="cal-prev" title="上一个月">‹</button>
+          <span id="cal-title"></span>
+          <button class="btn-icon" id="cal-next" title="下一个月">›</button>
+        </div>
+        <div id="cal-grid">
+          <span class="cal-weekday">一</span>
+          <span class="cal-weekday">二</span>
+          <span class="cal-weekday">三</span>
+          <span class="cal-weekday">四</span>
+          <span class="cal-weekday cal-grid-fri">五</span>
+          <span class="cal-weekday is-weekend cal-grid-sat cal-sat-first">六</span>
+          <span class="cal-weekday is-weekend">日</span>
+        </div>
       </div>
-      <div id="todo-input-row">
-        <button id="todo-add-btn">＋ 添加待办</button>
+
+      <!-- Todos -->
+      <div class="card" id="todos-card">
+        <div class="card-header">
+          <span class="card-title">待办</span>
+        </div>
+        <div id="todo-input-row">
+          <button id="todo-add-btn">＋ 添加待办</button>
+        </div>
+        <div id="todos-pending"></div>
+        <div id="todos-done-wrap" style="display:none">
+          <div class="todo-done-label">已完成</div>
+          <div id="todos-done"></div>
+        </div>
       </div>
-      <div id="todos-pending"></div>
-      <div id="todos-done-wrap" style="display:none">
-        <div class="todo-done-label">已完成</div>
-        <div id="todos-done"></div>
-      </div>
+
     </div>
 
   </div>
@@ -1964,6 +2088,9 @@
         const [s2r, s2g, s2b] = mix(0x19, 0x1c, 0x2e, 0.40);
         const [bdr, bdg, bdb] = mix(0x1e, 0x22, 0x38, 0.22);
         const [mr, mg, mb] = mix(0x0d, 0x0f, 0x17, 0.14);
+        const [hr, hg, hb] = hoverRgb.split(',').map(Number);
+        const lt = (c) => Math.round(c + (226 - c) * 0.5);
+        root.style.setProperty('--accent-light', `rgb(${lt(hr)},${lt(hg)},${lt(hb)})`);
         root.style.setProperty('--surface',   `rgba(${sr},${sg},${sb},0.3)`);
         root.style.setProperty('--surface2',  `rgba(${s2r},${s2g},${s2b},0.3)`);
         root.style.setProperty('--border',    `rgba(${bdr},${bdg},${bdb},0.5)`);
@@ -1998,11 +2125,104 @@
     };
 
     // ═══════════════════════════════════════
+    // Calendar Module
+    // ═══════════════════════════════════════
+    const Calendar = {
+      year: 0,
+      month: 0,
+
+      init() {
+        const now = new Date();
+        this.year = now.getFullYear();
+        this.month = now.getMonth();
+        document.getElementById('cal-prev').addEventListener('click', () => this.prevMonth());
+        document.getElementById('cal-next').addEventListener('click', () => this.nextMonth());
+        this.render();
+      },
+
+      prevMonth() {
+        this.month--;
+        if (this.month < 0) { this.month = 11; this.year--; }
+        this.render();
+      },
+
+      nextMonth() {
+        this.month++;
+        if (this.month > 11) { this.month = 0; this.year++; }
+        this.render();
+      },
+
+      render() {
+        document.getElementById('cal-title').textContent = `${this.year}年${this.month + 1}月`;
+
+        const grid = document.getElementById('cal-grid');
+        grid.querySelectorAll('.cal-day').forEach(el => el.remove());
+
+        const firstDay = new Date(this.year, this.month, 1).getDay();
+        const blanks = firstDay === 0 ? 6 : firstDay - 1;
+        const daysInMonth = new Date(this.year, this.month + 1, 0).getDate();
+
+        const now = new Date();
+        const todayY = now.getFullYear();
+        const todayM = now.getMonth();
+        const todayD = now.getDate();
+
+        const prevMonthDays = new Date(this.year, this.month, 0).getDate();
+        for (let i = 0; i < blanks; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'cal-day is-other';
+          if (i === 4) cell.classList.add('cal-grid-fri');
+          if (i >= 5) cell.classList.add('is-weekend');
+          if (i === 5) cell.classList.add('cal-grid-sat');
+          const span = document.createElement('span');
+          span.textContent = prevMonthDays - blanks + 1 + i;
+          cell.appendChild(span);
+          grid.appendChild(cell);
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const cell = document.createElement('div');
+          cell.className = 'cal-day';
+          const dow = new Date(this.year, this.month, d).getDay();
+          if (dow === 5) cell.classList.add('cal-grid-fri');
+          if (dow === 0 || dow === 6) cell.classList.add('is-weekend');
+          if (dow === 6) cell.classList.add('cal-grid-sat');
+          if (this.year === todayY && this.month === todayM && d === todayD) {
+            cell.classList.add('is-today');
+          }
+          const span = document.createElement('span');
+          span.textContent = d;
+          cell.appendChild(span);
+          grid.appendChild(cell);
+        }
+
+        const totalCells = blanks + daysInMonth;
+        const trailing = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+        for (let i = 1; i <= trailing; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'cal-day is-other';
+          const col = (totalCells + i - 1) % 7;
+          if (col === 4) cell.classList.add('cal-grid-fri');
+          if (col >= 5) cell.classList.add('is-weekend');
+          if (col === 5) cell.classList.add('cal-grid-sat');
+          const span = document.createElement('span');
+          span.textContent = i;
+          cell.appendChild(span);
+          grid.appendChild(cell);
+        }
+
+        const sats = grid.querySelectorAll('.cal-grid-sat');
+        if (sats.length) sats[sats.length - 1].classList.add('cal-sat-last');
+      }
+    };
+
+    // ═══════════════════════════════════════
     // Boot
     // ═══════════════════════════════════════
     const config = Storage.init();
     Search.init(config);
     Bookmarks.init(config);
+    Calendar.init();
     Todos.init(config);
     ConfigIO.init(config);
     Settings.init(config);
