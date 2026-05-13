@@ -686,9 +686,11 @@
       gap: 20px;
     }
 
-    /* ─── Hide todos layout ─── */
-    body.hide-todos #main-grid { grid-template-columns: 1fr; }
-    body.hide-todos #right-column { display: none; }
+    /* ─── Hide todos / calendar layout ─── */
+    body.hide-todos #todos-card { display: none; }
+    body.hide-calendar #calendar-card { display: none; }
+    body.hide-todos.hide-calendar #main-grid { grid-template-columns: 1fr; }
+    body.hide-todos.hide-calendar #right-column { display: none; }
 
     /* ─── Settings modal ─── */
     .settings-section-title {
@@ -701,7 +703,7 @@
     }
 
     .settings-section { margin-bottom: 20px; }
-    .settings-section:last-child { margin-bottom: 0; }
+    .settings-section:last-child { margin-bottom: 8px; }
 
     .color-swatches { display: flex; gap: 10px; flex-wrap: wrap; }
 
@@ -992,11 +994,18 @@
         </div>
       </div>
 
-      <!-- 待办区域 -->
+      <!-- 模块显示 -->
       <div class="settings-section">
-        <div class="settings-section-title">显示待办区域</div>
+        <div class="settings-section-title">模块显示</div>
         <div class="toggle-row">
-          <span>在页面右侧显示待办卡片</span>
+          <span>显示月历卡片</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="calendar-toggle" checked>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-row" style="margin-top:8px">
+          <span>显示待办卡片</span>
           <label class="toggle-switch">
             <input type="checkbox" id="todos-toggle" checked>
             <span class="toggle-track"></span>
@@ -1029,7 +1038,7 @@
       ],
       todos: [],
       searchHistory: [],
-      settings: { backgroundImage: null, accentColor: '#1e3a6e', showTodos: true, fontSize: 3 }
+      settings: { backgroundImage: null, accentColor: '#1e3a6e', showTodos: true, showCalendar: true, fontSize: 3 }
     };
 
     function uid() {
@@ -1063,6 +1072,7 @@
           if (cfg.settings.backgroundImage === undefined) cfg.settings.backgroundImage = null;
           if (!cfg.settings.accentColor) cfg.settings.accentColor = '#8e8ea8';
           if (cfg.settings.showTodos === undefined) cfg.settings.showTodos = true;
+          if (cfg.settings.showCalendar === undefined) cfg.settings.showCalendar = true;
           if (!cfg.settings.fontSize) cfg.settings.fontSize = 3;
           if (!cfg.searchHistory) cfg.searchHistory = [];
           this.save(cfg);
@@ -2032,6 +2042,13 @@
           document.body.classList.toggle('hide-todos', !e.target.checked);
         });
 
+        // 日历开关
+        document.getElementById('calendar-toggle').addEventListener('change', e => {
+          cfg.settings.showCalendar = e.target.checked;
+          Storage.save(cfg);
+          document.body.classList.toggle('hide-calendar', !e.target.checked);
+        });
+
         // 字体大小
         document.querySelectorAll('.font-size-btn').forEach(btn => {
           btn.addEventListener('click', () => {
@@ -2061,6 +2078,12 @@
         if (!cfg.settings.showTodos) {
           document.body.classList.add('hide-todos');
           document.getElementById('todos-toggle').checked = false;
+        }
+
+        // 日历开关
+        if (!cfg.settings.showCalendar) {
+          document.body.classList.add('hide-calendar');
+          document.getElementById('calendar-toggle').checked = false;
         }
 
         // 字体大小
